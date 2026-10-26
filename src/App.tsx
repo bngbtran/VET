@@ -1,6 +1,6 @@
 import { AboutPage } from './components/brand/AboutPage';
 import { BRAND } from './components/brand/brand';
-import { Wordmark } from './components/brand/Logo';
+import { CreatorLink, Wordmark } from './components/brand/Logo';
 import { ExportPanel } from './components/export/ExportPanel';
 import { JourneyPanel } from './components/journey/JourneyPanel';
 import { VideoPanel } from './components/journey/VideoPanel';
@@ -25,9 +25,6 @@ export function App() {
           <span className="font-display hidden text-[12.5px] italic text-faint md:inline">{BRAND.tagline}</span>
         </div>
         <div className="flex items-center gap-4">
-          <a href={`#${ABOUT}`} className="text-[12px] text-muted hover:text-fg">
-            Về sản phẩm
-          </a>
           <ProjectMenu />
         </div>
       </header>
@@ -38,7 +35,7 @@ export function App() {
           <VideoPanel />
           <ExportPanel disabled={!hasRoute} />
           <footer className="mt-auto px-5 py-4 text-[11px] text-faint">
-            Tạo bởi: <span className="text-muted">{BRAND.creator}</span>
+            Tạo bởi: <CreatorLink className="text-[12px]" />
             <span className="mx-1.5">·</span>
             <a href={`#${ABOUT}`} className="hover:text-fg">
               Về sản phẩm

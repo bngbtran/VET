@@ -2,7 +2,7 @@ import { useEffect, useRef, type ReactNode } from 'react';
 import { TRANSPORT, TRANSPORT_MODES } from '../../models/transport';
 import { CloseIcon, TransportIcon } from '../ui/icons';
 import { BRAND, BRAND_COLORS, BRAND_TYPE } from './brand';
-import { AppIcon, VMark, Wordmark } from './Logo';
+import { AppIcon, CreatorLink, VMark, Wordmark } from './Logo';
 
 const FLOW = ['Địa điểm', 'Lộ trình', 'Vệt', 'Chuyển động', 'Video'];
 
@@ -159,7 +159,7 @@ export function AboutPage({ onClose }: { onClose: () => void }) {
       <footer className="border-t border-line">
         <div className="mx-auto flex max-w-[920px] flex-wrap items-center justify-between gap-3 px-6 py-8 text-[12.5px] text-muted">
           <span>
-            Tạo bởi: <span className="text-fg">{BRAND.creator}</span>
+            Tạo bởi: <CreatorLink className="text-[14px]" />
           </span>
           <span className="text-faint">{BRAND.tagline}</span>
         </div>

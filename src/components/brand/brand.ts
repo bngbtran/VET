@@ -6,6 +6,7 @@ export const BRAND = {
   taglineEn: 'Every journey leaves a trace.',
   meaning: 'Dấu vết, vệt dài, đường để lại sau một chuyển động.',
   creator: 'Bùi Ngọc Bảo Trân',
+  creatorEmail: 'tranbnb.2004@gmail.com',
 } as const;
 
 export const BRAND_COLORS = [

@@ -63,3 +63,16 @@ export function AppIcon({ size = 64 }: { size?: number }) {
     </span>
   );
 }
+
+/** The creator credit: name in white italic, linking to their email. */
+export function CreatorLink({ className = '' }: { className?: string }) {
+  return (
+    <a
+      href={`mailto:${BRAND.creatorEmail}`}
+      title={BRAND.creatorEmail}
+      className={`font-display italic text-[#f4f1ea] underline-offset-4 transition-colors hover:text-accent hover:underline ${className}`}
+    >
+      {BRAND.creator}
+    </a>
+  );
+}
