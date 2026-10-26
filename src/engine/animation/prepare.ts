@@ -37,13 +37,8 @@ export interface PreparedJourney {
 
 const placeLngLat = (p: Place): LngLat => [p.longitude, p.latitude];
 
+/** Estimated travel time; drives how much of the video each segment gets. */
 function travelMinutes(seg: JourneySegment): number {
-  const start = parseClock(seg.startTime);
-  const end = parseClock(seg.endTime);
-  if (start !== null && end !== null) {
-    const diff = end >= start ? end - start : end + 24 * 60 - start;
-    if (diff > 0) return diff;
-  }
   return Math.max(1, (seg.route?.estimatedDuration ?? 600) / 60);
 }
 

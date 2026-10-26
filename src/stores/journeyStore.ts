@@ -166,14 +166,6 @@ export const journeyActions = {
     });
   },
 
-  setSegmentTime(segmentId: string, field: 'startTime' | 'endTime', value: string | null) {
-    commit((s) => ({
-      journey: {
-        segments: s.journey.segments.map((seg) => (seg.id === segmentId ? { ...seg, [field]: value } : seg)),
-      },
-    }));
-  },
-
   /** Retry a segment whose route failed. */
   retryRoute(segment: JourneySegment) {
     setStatus(routeKey(segment), null);

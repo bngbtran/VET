@@ -116,7 +116,7 @@ export function VideoPanel() {
         <FieldLabel>Overlays</FieldLabel>
         <Toggle label="Intro title" checked={video.overlays.intro} onChange={(intro) => journeyActions.updateOverlays({ intro })} />
         <Toggle label="Arrival title" checked={video.overlays.outro} onChange={(outro) => journeyActions.updateOverlays({ outro })} />
-        <Toggle label="Caption & clock" checked={video.overlays.caption} onChange={(caption) => journeyActions.updateOverlays({ caption })} />
+        <Toggle label="Caption" checked={video.overlays.caption} onChange={(caption) => journeyActions.updateOverlays({ caption })} />
         <Toggle label="Place labels" checked={video.overlays.labels} onChange={(labels) => journeyActions.updateOverlays({ labels })} />
       </Section>
     </>

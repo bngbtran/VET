@@ -166,11 +166,6 @@ function drawCaption(ctx: Ctx, caption: CaptionState, style: SceneStyle, pal: Pa
   ctx.shadowBlur = 12;
   text(ctx, caption.route, 72, 92, `600 24px ${FONT_SANS}`, pal.text, 4);
   text(ctx, caption.detail, 72, 128, `500 17px ${FONT_MONO}`, pal.muted, 2.5);
-  if (caption.clock) {
-    ctx.textAlign = 'right';
-    text(ctx, caption.clock, W - 72, 110, `500 44px ${FONT_MONO}`, pal.text, 1);
-    ctx.textAlign = 'left';
-  }
   ctx.shadowBlur = 0;
   ctx.fillStyle = hexToRgba(style.routeColor, 0.75);
   ctx.fillRect(0, H - 3, W * caption.progress, 3);

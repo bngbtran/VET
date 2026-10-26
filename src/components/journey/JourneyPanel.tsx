@@ -125,35 +125,6 @@ function Leg({ gap, transport, segment }: { gap: number; transport: JourneySegme
           </span>
         )}
       </div>
-
-      {segment?.route && (
-        <div className="mt-2 flex items-center gap-2">
-          <TimeInput
-            label="Departure"
-            value={segment.startTime}
-            onChange={(v) => journeyActions.setSegmentTime(segment.id, 'startTime', v)}
-          />
-          <span className="text-faint">→</span>
-          <TimeInput
-            label="Arrival"
-            value={segment.endTime}
-            onChange={(v) => journeyActions.setSegmentTime(segment.id, 'endTime', v)}
-          />
-        </div>
-      )}
     </div>
-  );
-}
-
-function TimeInput({ label, value, onChange }: { label: string; value: string | null; onChange: (v: string | null) => void }) {
-  return (
-    <input
-      type="time"
-      aria-label={label}
-      title={label}
-      value={value ?? ''}
-      onChange={(e) => onChange(e.target.value || null)}
-      className="h-7 w-[92px] rounded-md bg-ink px-2 font-mono text-[12px] text-fg ring-1 ring-line outline-none focus:ring-accent/60"
-    />
   );
 }
