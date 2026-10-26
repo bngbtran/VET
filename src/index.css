@@ -1,0 +1,96 @@
+@import '@fontsource/be-vietnam-pro/400.css';
+@import '@fontsource/be-vietnam-pro/500.css';
+@import '@fontsource/be-vietnam-pro/600.css';
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/500.css';
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Be Vietnam Pro', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  --color-ink: #0b0c0e;
+  --color-panel: #111215;
+  --color-raised: #17181c;
+  --color-line: rgb(255 255 255 / 0.07);
+  --color-line-strong: rgb(255 255 255 / 0.14);
+  --color-fg: #ece9e2;
+  --color-muted: #8b8881;
+  --color-faint: #5d5b56;
+  --color-accent: #f2b45a;
+  --color-danger: #ff8a7a;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-ink);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+::selection {
+  background: rgb(242 180 90 / 0.35);
+}
+
+/* Quiet scrollbars for the side panel. */
+.scroll-quiet {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(255 255 255 / 0.1) transparent;
+}
+
+input[type='time']::-webkit-calendar-picker-indicator {
+  filter: invert(0.6);
+}
+
+/* Timeline range input. */
+.vet-range {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  height: 18px;
+  cursor: pointer;
+}
+.vet-range::-webkit-slider-runnable-track {
+  height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(to right, var(--color-accent) var(--fill, 0%), rgb(255 255 255 / 0.12) var(--fill, 0%));
+}
+.vet-range::-moz-range-track {
+  height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(to right, var(--color-accent) var(--fill, 0%), rgb(255 255 255 / 0.12) var(--fill, 0%));
+}
+.vet-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  margin-top: -4.5px;
+  border-radius: 50%;
+  background: var(--color-fg);
+  box-shadow: 0 0 0 3px rgb(242 180 90 / 0.25);
+}
+.vet-range::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--color-fg);
+}
+.vet-range:focus-visible {
+  outline: none;
+}
+.vet-range:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 4px rgb(242 180 90 / 0.55);
+}

@@ -1,0 +1,159 @@
+import { formatDistance } from '../../engine/animation/state';
+import type { JourneySegment, Place } from '../../models/journey';
+import { TRANSPORT } from '../../models/transport';
+import { journeyActions, routeKey, useJourney } from '../../stores/journeyStore';
+import { Section } from '../ui/controls';
+import { CloseIcon, PlusIcon, SpinnerIcon, SwapIcon } from '../ui/icons';
+import { LocationSearch } from './LocationSearch';
+import { TransportPicker } from './TransportPicker';
+
+const MAX_STOPS = 8;
+
+function formatDuration(seconds: number): string {
+  const m = Math.round(seconds / 60);
+  if (m < 60) return `${m} min`;
+  const h = Math.floor(m / 60);
+  return `${h} h ${String(m % 60).padStart(2, '0')}`;
+}
+
+function segmentFor(segments: JourneySegment[], a: Place | null, b: Place | null) {
+  if (!a || !b) return undefined;
+  const same = (p: Place, q: Place) => p.latitude === q.latitude && p.longitude === q.longitude;
+  return segments.find((s) => same(s.origin, a) && same(s.destination, b));
+}
+
+export function JourneyPanel() {
+  const stops = useJourney((s) => s.journey.stops);
+  const segments = useJourney((s) => s.journey.segments);
+  const transports = useJourney((s) => s.transports);
+
+  return (
+    <Section
+      title="JOURNEY"
+      aside={
+        <button
+          type="button"
+          className="text-faint hover:text-fg disabled:opacity-30"
+          title="Reverse journey"
+          aria-label="Reverse journey"
+          disabled={stops.filter(Boolean).length < 2}
+          onClick={journeyActions.reverse}
+        >
+          <SwapIcon size={14} />
+        </button>
+      }
+    >
+      <div className="flex flex-col">
+        {stops.map((stop, i) => {
+          const isFirst = i === 0;
+          const isLast = i === stops.length - 1;
+          const previous = stops.slice(0, i).reverse().find(Boolean) ?? stops.slice(i + 1).find(Boolean) ?? null;
+          return (
+            <div key={i}>
+              <div className="flex items-center gap-1.5">
+                <div className="min-w-0 flex-1">
+                  <LocationSearch
+                    label={isFirst ? 'From' : isLast ? 'To' : `Stop ${i}`}
+                    marker={isFirst ? 'origin' : isLast ? 'destination' : 'stop'}
+                    value={stop}
+                    near={previous ?? undefined}
+                    onChange={(p) => journeyActions.setStop(i, p)}
+                  />
+                </div>
+                {stops.length > 2 && (
+                  <button
+                    type="button"
+                    aria-label={`Remove stop ${i + 1}`}
+                    className="text-faint hover:text-fg"
+                    onClick={() => journeyActions.removeStop(i)}
+                  >
+                    <CloseIcon size={13} />
+                  </button>
+                )}
+              </div>
+              {!isLast && (
+                <Leg
+                  gap={i}
+                  transport={transports[i] ?? 'car'}
+                  segment={segmentFor(segments, stop, stops[i + 1] ?? null)}
+                />
+              )}
+            </div>
+          );
+        })}
+      </div>
+      {stops.length < MAX_STOPS && (
+        <button
+          type="button"
+          onClick={journeyActions.addStop}
+          className="mt-3 flex items-center gap-2 text-[12px] text-muted hover:text-fg"
+        >
+          <PlusIcon size={13} /> Add stop
+        </button>
+      )}
+    </Section>
+  );
+}
+
+function Leg({ gap, transport, segment }: { gap: number; transport: JourneySegment['transport']; segment?: JourneySegment }) {
+  const status = useJourney((s) => (segment ? s.routeStatus[routeKey(segment)] : undefined));
+
+  return (
+    <div className="relative my-1 ml-[16px] border-l border-dashed border-line-strong py-2.5 pl-4">
+      <TransportPicker value={transport} onChange={(m) => journeyActions.setTransport(gap, m)} />
+
+      <div className="mt-2 min-h-[18px] font-mono text-[10.5px] tracking-wide text-muted">
+        {!segment && <span className="text-faint">Choose both places</span>}
+        {status?.state === 'loading' && (
+          <span className="flex items-center gap-1.5">
+            <SpinnerIcon size={11} /> Routing…
+          </span>
+        )}
+        {status?.state === 'error' && (
+          <span className="text-danger">
+            {status.message}{' '}
+            <button type="button" className="underline" onClick={() => journeyActions.retryRoute(segment!)}>
+              Retry
+            </button>
+          </span>
+        )}
+        {segment?.route && !status && (
+          <span data-testid="route-summary">
+            {TRANSPORT[segment.transport].label.toUpperCase()} · {formatDistance(segment.route.distance)} ·{' '}
+            {formatDuration(segment.route.estimatedDuration)}
+            {segment.route.approximate && <span className="text-accent/80"> · approximate path</span>}
+          </span>
+        )}
+      </div>
+
+      {segment?.route && (
+        <div className="mt-2 flex items-center gap-2">
+          <TimeInput
+            label="Departure"
+            value={segment.startTime}
+            onChange={(v) => journeyActions.setSegmentTime(segment.id, 'startTime', v)}
+          />
+          <span className="text-faint">→</span>
+          <TimeInput
+            label="Arrival"
+            value={segment.endTime}
+            onChange={(v) => journeyActions.setSegmentTime(segment.id, 'endTime', v)}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function TimeInput({ label, value, onChange }: { label: string; value: string | null; onChange: (v: string | null) => void }) {
+  return (
+    <input
+      type="time"
+      aria-label={label}
+      title={label}
+      value={value ?? ''}
+      onChange={(e) => onChange(e.target.value || null)}
+      className="h-7 w-[92px] rounded-md bg-ink px-2 font-mono text-[12px] text-fg ring-1 ring-line outline-none focus:ring-accent/60"
+    />
+  );
+}
