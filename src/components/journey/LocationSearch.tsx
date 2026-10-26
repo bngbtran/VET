@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import type { Place } from '../../models/journey';
-import { geocoder } from '../../providers/geocoding';
+import { searchPlaces } from '../../providers/geocoding';
 import { AppError, describeError, isAbortError } from '../../utils/errors';
 import { CloseIcon, SearchIcon, SpinnerIcon } from '../ui/icons';
 
@@ -16,7 +16,8 @@ interface Props {
 type SearchState =
   | { kind: 'idle' }
   | { kind: 'loading' }
-  | { kind: 'results'; places: Place[] }
+  /** `pending`: a slower source is still searching and may add more. */
+  | { kind: 'results'; places: Place[]; pending: boolean }
   | { kind: 'error'; message: string };
 
 export function LocationSearch({ label, value, onChange, near, marker, autoFocus }: Props) {
@@ -37,17 +38,24 @@ export function LocationSearch({ label, value, onChange, near, marker, autoFocus
     const timer = window.setTimeout(async () => {
       setSearch({ kind: 'loading' });
       try {
-        const places = await geocoder.search({
-          text,
-          near: nearLat !== undefined && nearLng !== undefined ? { latitude: nearLat, longitude: nearLng } : undefined,
-          signal: ctrl.signal,
-        });
-        setActive(0);
-        setSearch(
-          places.length
-            ? { kind: 'results', places }
-            : { kind: 'error', message: new AppError('location-not-found', `No places match “${text}”.`).message },
+        let shown = false;
+        // Results stream in per source: show the fast ones while slower ones keep searching.
+        const places = await searchPlaces(
+          {
+            text,
+            near: nearLat !== undefined && nearLng !== undefined ? { latitude: nearLat, longitude: nearLng } : undefined,
+            signal: ctrl.signal,
+          },
+          (partial, pending) => {
+            if (!partial.length) return;
+            if (!shown) setActive(0);
+            shown = true;
+            setSearch({ kind: 'results', places: partial, pending });
+          },
         );
+        if (!places.length) {
+          setSearch({ kind: 'error', message: new AppError('location-not-found', `No places match “${text}”.`).message });
+        }
       } catch (err) {
         if (isAbortError(err) && ctrl.signal.aborted) return;
         setSearch({ kind: 'error', message: describeError(err) });
@@ -144,7 +152,7 @@ export function LocationSearch({ label, value, onChange, near, marker, autoFocus
             }
           }}
         />
-        {search.kind === 'loading' ? (
+        {search.kind === 'loading' || (search.kind === 'results' && search.pending) ? (
           <SpinnerIcon size={14} className="text-muted" />
         ) : (
           <SearchIcon size={14} className="text-faint" />
@@ -155,10 +163,13 @@ export function LocationSearch({ label, value, onChange, near, marker, autoFocus
         <div
           id={listId}
           role="listbox"
-          className="absolute inset-x-0 top-[calc(100%+4px)] z-30 overflow-hidden rounded-md bg-raised py-1 shadow-2xl ring-1 ring-line-strong"
+          className="absolute inset-x-0 top-[calc(100%+4px)] z-30 flex flex-col overflow-hidden rounded-md bg-raised py-1 shadow-2xl ring-1 ring-line-strong"
         >
           {search.kind === 'loading' && <div className="px-3 py-2.5 text-[12px] text-muted">Searching…</div>}
           {search.kind === 'error' && <div className="px-3 py-2.5 text-[12px] text-danger">{search.message}</div>}
+          {search.kind === 'results' && search.pending && (
+            <div className="order-last px-3 pb-1.5 pt-1 text-[10.5px] text-faint">Searching more places…</div>
+          )}
           {results.map((place, i) => (
             <button
               key={place.id + i}

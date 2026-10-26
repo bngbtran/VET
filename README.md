@@ -70,7 +70,7 @@ All free and keyless; only coordinates / search text are sent, and only when nee
 
 | Purpose | Service | Notes |
 | --- | --- | --- |
-| Place search | [Photon](https://photon.komoot.io) (komoot) | Built for autocomplete. Fair use. |
+| Place search | [Open-Meteo](https://open-meteo.com/en/docs/geocoding-api) (GeoNames) + [Photon](https://photon.komoot.io) (komoot) | Queried in parallel, results stream in. Open-Meteo: fast, cities/towns. Photon: streets and landmarks; skipped for 60 s after a timeout. Names are romanized (Latin script), Vietnamese keeps diacritics. |
 | Road / bike / foot routing | [FOSSGIS OSRM](https://routing.openstreetmap.de) | Separate car, bike, foot graphs. Fair use; no SLA. |
 | Basemaps | [CARTO](https://carto.com/basemaps) and [OpenFreeMap](https://openfreemap.org) | Attribution is drawn on every exported frame. |
 

@@ -152,7 +152,7 @@ export function AboutPage({ onClose }: { onClose: () => void }) {
             bản đồ khi cần.
           </p>
           <p className="mt-6 text-[12px] leading-relaxed text-faint">
-            Dữ liệu bản đồ © OpenStreetMap contributors · CARTO · OpenFreeMap. Tìm kiếm: Photon (komoot). Chỉ đường: OSRM
+            Dữ liệu bản đồ © OpenStreetMap contributors · CARTO · OpenFreeMap. Tìm kiếm: Open-Meteo (GeoNames) · Photon (komoot). Chỉ đường: OSRM
             (FOSSGIS).
           </p>
         </section>
