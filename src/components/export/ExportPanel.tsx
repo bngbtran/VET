@@ -3,6 +3,7 @@ import { player } from '../../engine/animation/player';
 import { bitrateFor, exportVideo, isExportSupported, type ExportProgress, type ExportResult } from '../../engine/video/exportVideo';
 import type { ContainerFormat } from '../../engine/video/protocol';
 import { usePreparedJourney } from '../../hooks/usePreparedJourney';
+import { useVideoDuration } from '../../hooks/useVideoDuration';
 import { QUALITY_PRESETS } from '../../models/video';
 import { journeyActions, useJourney } from '../../stores/journeyStore';
 import { AppError, describeError } from '../../utils/errors';
@@ -25,8 +26,9 @@ export function ExportPanel({ disabled }: { disabled: boolean }) {
   const supported = isExportSupported();
 
   const preset = QUALITY_PRESETS.find((p) => p.width === video.width && p.height === video.height) ?? QUALITY_PRESETS[1]!;
-  const frames = Math.round(video.duration * video.fps);
-  const estimateMb = (bitrateFor(video.width, video.height, video.fps) * video.duration) / 8 / 1_000_000;
+  const duration = useVideoDuration();
+  const frames = Math.round(duration * video.fps);
+  const estimateMb = (bitrateFor(video.width, video.height, video.fps) * duration) / 8 / 1_000_000;
 
   const start = async () => {
     player.pause();

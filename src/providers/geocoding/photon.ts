@@ -61,8 +61,10 @@ export class PhotonGeocodingProvider implements GeocodingProvider {
     if (near) {
       params.set('lat', near.latitude.toFixed(3));
       params.set('lon', near.longitude.toFixed(3));
-      // Gentle location bias; global results still surface.
-      params.set('location_bias_scale', '0.3');
+      // Regional, gentle bias (zoom 8 ≈ a province, not a street): searching "Hà Nội" from Huế
+      // must find the city, not Hà Nội street around the corner.
+      params.set('zoom', '8');
+      params.set('location_bias_scale', '0.5');
     }
     const data = await fetchJson<{ features?: PhotonFeature[] }>(`${ENDPOINT}?${params}`, {
       signal,

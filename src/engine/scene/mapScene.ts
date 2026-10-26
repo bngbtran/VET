@@ -1,5 +1,5 @@
 import type { FeatureCollection } from 'geojson';
-import type { GeoJSONSource, Map as MlMap } from 'maplibre-gl';
+import type { ExpressionSpecification, GeoJSONSource, Map as MlMap } from 'maplibre-gl';
 import type { LngLat } from '../../models/journey';
 import type { PreparedJourney } from '../animation/prepare';
 import type { AnimationState, MarkerState } from '../animation/state';
@@ -30,21 +30,30 @@ export interface SceneStyle {
 type Fc = FeatureCollection;
 const emptyFc = (): Fc => ({ type: 'FeatureCollection', features: [] });
 
-function linesFc(lines: LngLat[][]): Fc {
+/** Lines with an optional per-feature colour (each leg of a journey can have its own). */
+function linesFc(lines: LngLat[][], colors: (string | undefined)[] = []): Fc {
   return {
     type: 'FeatureCollection',
     features: lines
-      .filter((l) => l.length >= 2)
-      .map((coordinates) => ({ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates } })),
+      .map((coordinates, i) => ({ coordinates, color: colors[i] }))
+      .filter((l) => l.coordinates.length >= 2)
+      .map(({ coordinates, color }) => ({
+        type: 'Feature',
+        properties: color ? { color } : {},
+        geometry: { type: 'LineString', coordinates },
+      })),
   };
 }
+
+/** A feature's own colour, falling back to the journey's Vệt colour. */
+const featureColor = (fallback: string) => ['coalesce', ['get', 'color'], fallback] as ExpressionSpecification;
 
 function markersFc(markers: MarkerState[]): Fc {
   return {
     type: 'FeatureCollection',
     features: markers.map((m) => ({
       type: 'Feature',
-      properties: { role: m.role, reached: m.reached },
+      properties: { role: m.role, reached: m.reached, color: m.color },
       geometry: { type: 'Point', coordinates: m.position },
     })),
   };
@@ -83,7 +92,7 @@ export class MapScene {
         type: 'line',
         source: SRC.background,
         layout: round,
-        paint: { 'line-color': routeColor, 'line-width': 2.5, 'line-opacity': tone === 'dark' ? 0.2 : 0.3 },
+        paint: { 'line-color': featureColor(routeColor), 'line-width': 2.5, 'line-opacity': tone === 'dark' ? 0.2 : 0.3 },
       });
     }
     if (!map.getLayer(LAYERS.glow)) {
@@ -92,7 +101,7 @@ export class MapScene {
         type: 'line',
         source: SRC.progress,
         layout: round,
-        paint: { 'line-color': routeColor, 'line-width': 18, 'line-blur': 14, 'line-opacity': tone === 'dark' ? 0.5 : 0.35 },
+        paint: { 'line-color': featureColor(routeColor), 'line-width': 18, 'line-blur': 14, 'line-opacity': tone === 'dark' ? 0.5 : 0.35 },
       });
     }
     if (!map.getLayer(LAYERS.progress)) {
@@ -101,7 +110,7 @@ export class MapScene {
         type: 'line',
         source: SRC.progress,
         layout: round,
-        paint: { 'line-color': routeColor, 'line-width': 5 },
+        paint: { 'line-color': featureColor(routeColor), 'line-width': 5 },
       });
     }
     if (!map.getLayer(LAYERS.markerHalo)) {
@@ -111,7 +120,7 @@ export class MapScene {
         source: SRC.markers,
         paint: {
           'circle-radius': 15,
-          'circle-color': routeColor,
+          'circle-color': featureColor(routeColor),
           'circle-blur': 0.6,
           'circle-opacity': ['case', ['get', 'reached'], 0.35, 0],
           'circle-pitch-alignment': 'map',
@@ -125,8 +134,8 @@ export class MapScene {
         source: SRC.markers,
         paint: {
           'circle-radius': 7,
-          'circle-color': ['case', ['get', 'reached'], routeColor, ground],
-          'circle-stroke-color': ['case', ['get', 'reached'], ground, routeColor],
+          'circle-color': ['case', ['get', 'reached'], featureColor(routeColor), ground],
+          'circle-stroke-color': ['case', ['get', 'reached'], ground, featureColor(routeColor)],
           'circle-stroke-width': 2.5,
           'circle-pitch-alignment': 'map',
         },
@@ -139,19 +148,23 @@ export class MapScene {
     const map = this.map;
     if (!map.getLayer(LAYERS.progress)) return;
     const ground = style.tone === 'dark' ? '#0b0c0e' : '#ffffff';
-    map.setPaintProperty(LAYERS.background, 'line-color', style.routeColor);
+    const color = featureColor(style.routeColor);
+    map.setPaintProperty(LAYERS.background, 'line-color', color);
     map.setPaintProperty(LAYERS.background, 'line-opacity', style.tone === 'dark' ? 0.2 : 0.3);
-    map.setPaintProperty(LAYERS.glow, 'line-color', style.routeColor);
+    map.setPaintProperty(LAYERS.glow, 'line-color', color);
     map.setPaintProperty(LAYERS.glow, 'line-opacity', style.tone === 'dark' ? 0.5 : 0.35);
-    map.setPaintProperty(LAYERS.progress, 'line-color', style.routeColor);
-    map.setPaintProperty(LAYERS.markerHalo, 'circle-color', style.routeColor);
-    map.setPaintProperty(LAYERS.marker, 'circle-color', ['case', ['get', 'reached'], style.routeColor, ground]);
-    map.setPaintProperty(LAYERS.marker, 'circle-stroke-color', ['case', ['get', 'reached'], ground, style.routeColor]);
+    map.setPaintProperty(LAYERS.progress, 'line-color', color);
+    map.setPaintProperty(LAYERS.markerHalo, 'circle-color', color);
+    map.setPaintProperty(LAYERS.marker, 'circle-color', ['case', ['get', 'reached'], color, ground]);
+    map.setPaintProperty(LAYERS.marker, 'circle-stroke-color', ['case', ['get', 'reached'], ground, color]);
   }
 
   /** The full, dim route that the Vệt will trace. */
   setJourney(journey: PreparedJourney): void {
-    this.background = linesFc(journey.segments.map((s) => s.measured.coordinates));
+    this.background = linesFc(
+      journey.segments.map((s) => s.measured.coordinates),
+      journey.segments.map((s) => s.color),
+    );
     this.source(SRC.background)?.setData(this.background);
   }
 
@@ -159,14 +172,14 @@ export class MapScene {
   apply(state: AnimationState): void {
     const last = state.visibleRoute[state.visibleRoute.length - 1];
     const tip = last?.[last.length - 1];
-    const key = `${state.visibleRoute.length}:${last?.length ?? 0}:${tip?.[0]}:${tip?.[1]}`;
+    const key = `${state.visibleRoute.length}:${last?.length ?? 0}:${tip?.[0]}:${tip?.[1]}:${state.routeColors.join()}`;
     if (key !== this.progressKey) {
       this.progressKey = key;
-      this.progress = linesFc(state.visibleRoute);
+      this.progress = linesFc(state.visibleRoute, state.routeColors);
       this.source(SRC.progress)?.setData(this.progress);
     }
 
-    const mKey = state.markers.map((m) => `${m.position[0]},${m.position[1]},${m.reached}`).join('|');
+    const mKey = state.markers.map((m) => `${m.position[0]},${m.position[1]},${m.reached},${m.color}`).join('|');
     if (mKey !== this.markersKey) {
       this.markersKey = mKey;
       this.markers = markersFc(state.markers);

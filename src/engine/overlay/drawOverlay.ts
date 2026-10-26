@@ -72,9 +72,11 @@ export function drawOverlay(env: OverlayEnv, state: AnimationState): void {
   }
 
   if (state.overlay.labels) drawLabels(env, state, pal);
-  if (state.vehicle) drawVehicle(env, state);
-  if (state.overlay.title) drawTitle(ctx, state.overlay.title, style, pal);
-  if (state.overlay.caption) drawCaption(ctx, state.overlay.caption, style, pal);
+  // Accents follow the active leg's colour (legs of a multi-stop journey can differ).
+  const legStyle: SceneStyle = { ...style, routeColor: state.accent };
+  if (state.vehicle) drawVehicle({ ...env, style: legStyle }, state);
+  if (state.overlay.title) drawTitle(ctx, state.overlay.title, legStyle, pal);
+  if (state.overlay.caption) drawCaption(ctx, state.overlay.caption, legStyle, pal);
 
   ctx.textAlign = 'right';
   ctx.globalAlpha = 0.55;
@@ -136,7 +138,8 @@ function drawTitle(ctx: Ctx, title: TitleCard, style: SceneStyle, pal: Palette) 
   const a = title.opacity;
   const large = title.size === 'large';
   const x = 120;
-  const base = H - (large ? 132 : 120) + (1 - a) * 16; // drift up as it fades in
+  // Room for the summary line when there is one; drift up as the card fades in.
+  const base = H - (large ? 132 : 120) - (title.stat ? 64 : 0) + (1 - a) * 16;
 
   // Soft scrim from the bottom so the type reads on any map.
   const scrim = ctx.createLinearGradient(0, H * 0.5, 0, H);
@@ -155,6 +158,15 @@ function drawTitle(ctx: Ctx, title: TitleCard, style: SceneStyle, pal: Palette) 
   ctx.fillStyle = style.routeColor;
   ctx.fillRect(x, base, 72 * a, 3);
   text(ctx, title.coordinates, x, base + 44, `500 22px ${FONT_MONO}`, pal.muted, 2);
+  if (title.stat) {
+    // "TOTAL DISTANCE  1,245 KM" — label quiet, number in the Vệt colour.
+    text(ctx, title.stat.label, x, base + 108, `500 16px ${FONT_MONO}`, pal.muted, 4);
+    const labelWidth = ctx.measureText(title.stat.label).width;
+    ctx.shadowColor = pal.shadow;
+    ctx.shadowBlur = 14;
+    text(ctx, title.stat.value, x + labelWidth + 22, base + 112, `600 40px ${FONT_SANS}`, style.routeColor, 2);
+    ctx.shadowBlur = 0;
+  }
   ctx.globalAlpha = 1;
 }
 

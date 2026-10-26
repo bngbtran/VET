@@ -186,6 +186,18 @@ describe('animation state', () => {
     expect(getAnimationState(model, 10).overlay.caption?.route).toBe('ĐÀ NẴNG → HUẾ');
   });
 
+  it('shows the journey date and the total distance', () => {
+    const dated = { ...journey, date: '2025-10' };
+    const m = createAnimationModel(prepareJourney(dated));
+    expect(getAnimationState(m, 1).overlay.title?.kicker).toBe('10/2025');
+    const end = getAnimationState(m, 19.9).overlay.title!;
+    expect(end.kicker).toBe('JOURNEY COMPLETE · 10/2025');
+    expect(end.stat?.label).toBe('TOTAL DISTANCE');
+    expect(end.stat?.value).toMatch(/^\d+ KM$/);
+    // Undated journeys simply omit it.
+    expect(getAnimationState(model, 1).overlay.title?.kicker).toBeNull();
+  });
+
   it('interpolates the journey clock', () => {
     const mid = getAnimationState(model, 10).overlay.caption?.clock;
     expect(mid! > '08:00' && mid! < '10:30').toBe(true);
@@ -201,9 +213,55 @@ describe('animation state', () => {
     expect(kinds).toEqual(['intro', 'travel', 'hold', 'travel', 'outro']);
     const end = getAnimationState(multi, 20);
     expect(end.visibleRoute).toHaveLength(2);
+    const total = multi.journey.segments.reduce((sum, seg) => sum + seg.distance, 0);
+    expect(multi.journey.totalDistance).toBe(total);
     expect(end.vehicle!.transport).toBe('train');
     const hold = multi.timeline.phases[2]!;
     expect(getAnimationState(multi, (hold.start + hold.end) / 2 - 0.01).overlay.title?.name).toBe('HUẾ');
+  });
+
+  it('gives each leg its own colour and, per-leg, its own seconds', () => {
+    const second: LngLat[] = [
+      [HUE.longitude, HUE.latitude],
+      [HANOI.longitude, HANOI.latitude],
+    ];
+    const j = journeyWith([coords, second], [DA_NANG, HUE, HANOI]);
+    j.segments[1]!.color = '#5ad1f2';
+    j.segments[0]!.videoDuration = 4;
+    j.segments[1]!.videoDuration = 9;
+    j.videoSettings.segmentTiming = 'perSegment';
+    const m = createAnimationModel(prepareJourney(j));
+
+    const travel = m.timeline.phases.filter((p) => p.kind === 'travel');
+    expect(travel.map((p) => +(p.end - p.start).toFixed(6))).toEqual([4, 9]);
+    // Total follows the legs: intro + 4 + stop + 9 + outro.
+    const fixed = m.timeline.phases.filter((p) => p.kind !== 'travel').reduce((t, p) => t + p.end - p.start, 0);
+    expect(m.timeline.duration).toBeCloseTo(13 + fixed, 9);
+
+    const end = getAnimationState(m, m.timeline.duration);
+    expect(end.routeColors).toEqual([j.videoSettings.routeColor, '#5ad1f2']);
+    expect(end.accent).toBe('#5ad1f2');
+    expect(end.markers.map((mk) => mk.color)).toEqual([j.videoSettings.routeColor, j.videoSettings.routeColor, '#5ad1f2']);
+
+    // Back to total timing: the preset duration wins again.
+    j.videoSettings.segmentTiming = 'total';
+    expect(createAnimationModel(prepareJourney(j)).timeline.duration).toBe(20);
+  });
+
+  it('dates each leg, falling back to the journey date', () => {
+    const second: LngLat[] = [
+      [HUE.longitude, HUE.latitude],
+      [HANOI.longitude, HANOI.latitude],
+    ];
+    const j = { ...journeyWith([coords, second], [DA_NANG, HUE, HANOI]), date: '2026-02' };
+    j.segments[1]!.date = '2026-03';
+    const m = createAnimationModel(prepareJourney(j));
+    const travel = m.timeline.phases.filter((p) => p.kind === 'travel');
+    const mid = (p: { start: number; end: number }) => (p.start + p.end) / 2;
+    expect(getAnimationState(m, 1).overlay.title?.kicker).toBe('02/2026');
+    expect(getAnimationState(m, mid(travel[0]!)).overlay.caption?.detail.endsWith('· 02/2026')).toBe(true);
+    expect(getAnimationState(m, mid(travel[1]!)).overlay.caption?.detail.endsWith('· 03/2026')).toBe(true);
+    expect(getAnimationState(m, 19.9).overlay.title?.kicker).toBe('JOURNEY COMPLETE · 02/2026 → 03/2026');
   });
 
   it('handles journeys without routes', () => {

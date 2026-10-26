@@ -84,6 +84,11 @@ body {
 }
 
 /* Quiet scrollbars for the side panel. */
+input[type='month']::-webkit-calendar-picker-indicator {
+  filter: invert(0.6);
+  cursor: pointer;
+}
+
 .scroll-quiet {
   scrollbar-width: thin;
   scrollbar-color: var(--color-track) transparent;

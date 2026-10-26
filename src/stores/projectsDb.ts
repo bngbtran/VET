@@ -130,6 +130,7 @@ function normalizeJourney(raw: Journey): Journey {
     createdAt: isNum(raw.createdAt) ? raw.createdAt : Date.now(),
     updatedAt: isNum(raw.updatedAt) ? raw.updatedAt : Date.now(),
     stops,
+    date: typeof raw.date === 'string' && /^\d{4}-\d{2}$/.test(raw.date) ? raw.date : null,
     videoSettings: {
       ...DEFAULT_VIDEO_SETTINGS,
       ...raw.videoSettings,

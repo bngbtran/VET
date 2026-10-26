@@ -21,12 +21,16 @@ export interface MarkerState {
   name: string;
   role: 'origin' | 'stop' | 'destination';
   reached: boolean;
+  /** Colour of the leg that arrives here (the first leg's, for the origin). */
+  color: string;
 }
 
 export interface TitleCard {
   kicker: string | null;
   name: string;
   coordinates: string;
+  /** Summary line under the coordinates, e.g. total distance on the arrival card. */
+  stat: { label: string; value: string } | null;
   opacity: number;
   size: 'large' | 'small';
 }
@@ -58,6 +62,10 @@ export interface AnimationState {
   vehicle: VehicleState | null;
   /** The Vệt: one polyline per segment that has been (partly) travelled. */
   visibleRoute: LngLat[][];
+  /** Colour of each visibleRoute line (each leg can have its own). */
+  routeColors: string[];
+  /** Colour of the active leg — vehicle halo, titles and caption use it. */
+  accent: string;
   markers: MarkerState[];
   camera: CameraState;
   overlay: OverlayState;
@@ -109,6 +117,17 @@ function clockAt(seg: PreparedSegment, fraction: number): number | null {
   return lerp(seg.startMinutes, seg.endMinutes, fraction);
 }
 
+const withDate = (text: string, date: string | null) => (date ? `${text} · ${date}` : text);
+
+/** "02/2026" if every leg shares a date, "02/2026 → 05/2026" if they differ (first to last). */
+function dateSpan(segs: PreparedSegment[]): string | null {
+  const dates = segs.map((s) => s.date).filter((d): d is string => d !== null);
+  if (dates.length === 0) return null;
+  const first = dates[0]!;
+  const last = dates[dates.length - 1]!;
+  return first === last ? first : `${first} → ${last}`;
+}
+
 /** Clock during a stop: runs from arrival to the next departure (which may be the next day). */
 function holdClock(arrive: number | null, depart: number | null, r: number): number | null {
   if (arrive === null || depart === null) return arrive ?? depart;
@@ -140,12 +159,15 @@ export function getAnimationState(model: AnimationModel, rawTime: number): Anima
       segmentProgress: 0,
       vehicle: null,
       visibleRoute: [],
+      routeColors: [],
+      accent: journey.settings.routeColor,
       markers: journey.places.map((p, i) => ({
         id: p.id + i,
         position: [p.longitude, p.latitude],
         name: p.name,
         role: i === 0 ? 'origin' : 'destination',
         reached: i === 0,
+        color: journey.settings.routeColor,
       })),
       camera: journey.overview,
       overlay: { title: null, caption: null, labels: overlays.labels },
@@ -178,18 +200,26 @@ export function getAnimationState(model: AnimationModel, rawTime: number): Anima
   const distance = seg.measured.total * fraction;
 
   const visibleRoute: LngLat[][] = [];
-  for (let i = 0; i < segmentIndex; i++) visibleRoute.push(segs[i]!.measured.coordinates);
+  const routeColors: string[] = [];
+  for (let i = 0; i < segmentIndex; i++) {
+    visibleRoute.push(segs[i]!.measured.coordinates);
+    routeColors.push(segs[i]!.color);
+  }
   const partial = getRouteUntilDistance(seg.measured, distance);
-  if (partial.length >= 2) visibleRoute.push(partial);
+  if (partial.length >= 2) {
+    visibleRoute.push(partial);
+    routeColors.push(seg.color);
+  }
 
   const markers: MarkerState[] = [
-    { id: `${segs[0]!.id}:o`, position: [segs[0]!.origin.longitude, segs[0]!.origin.latitude], name: segs[0]!.origin.name, role: 'origin', reached: true },
+    { id: `${segs[0]!.id}:o`, position: [segs[0]!.origin.longitude, segs[0]!.origin.latitude], name: segs[0]!.origin.name, role: 'origin', reached: true, color: segs[0]!.color },
     ...segs.map((s, i): MarkerState => ({
       id: `${s.id}:d`,
       position: [s.destination.longitude, s.destination.latitude],
       name: s.destination.name,
       role: i === segs.length - 1 ? 'destination' : 'stop',
       reached: i < segmentIndex || (i === segmentIndex && fraction >= 1),
+      color: s.color,
     })),
   ];
 
@@ -202,9 +232,10 @@ export function getAnimationState(model: AnimationModel, rawTime: number): Anima
       const fade = Math.min(0.5, (intro.end - intro.start) * 0.3);
       const origin = segs[0]!.origin;
       title = {
-        kicker: null,
+        kicker: segs[0]!.date,
         name: upper(origin.name),
         coordinates: formatCoordinates(origin),
+        stat: null,
         opacity: envelope(time, 0.05, 0.05 + fade, intro.end - fade, intro.end + 0.4),
         size: 'large',
       };
@@ -212,9 +243,10 @@ export function getAnimationState(model: AnimationModel, rawTime: number): Anima
   } else if (phase.kind === 'hold') {
     const stop = segs[phase.segment]!.destination;
     title = {
-      kicker: `${TRANSPORT[segs[phase.segment + 1]!.transport].label.toUpperCase()} NEXT`,
+      kicker: withDate(`${TRANSPORT[segs[phase.segment + 1]!.transport].label.toUpperCase()} NEXT`, segs[phase.segment + 1]!.date),
       name: upper(stop.name),
       coordinates: formatCoordinates(stop),
+      stat: null,
       opacity: envelope(time, phase.start, phase.start + 0.25, phase.end - 0.25, phase.end),
       size: 'small',
     };
@@ -222,9 +254,10 @@ export function getAnimationState(model: AnimationModel, rawTime: number): Anima
     const dest = segs[segs.length - 1]!.destination;
     const len = outro.end - outro.start;
     title = {
-      kicker: 'JOURNEY COMPLETE',
+      kicker: withDate('JOURNEY COMPLETE', dateSpan(segs)),
       name: upper(dest.name),
       coordinates: formatCoordinates(dest),
+      stat: { label: 'TOTAL DISTANCE', value: formatDistance(journey.totalDistance) },
       opacity: smoothstep(remap01(time, outro.start + len * 0.2, outro.start + len * 0.45)),
       size: 'large',
     };
@@ -240,7 +273,7 @@ export function getAnimationState(model: AnimationModel, rawTime: number): Anima
     }
     caption = {
       route: `${upper(seg.origin.name)} → ${upper(seg.destination.name)}`,
-      detail: `${TRANSPORT[seg.transport].label.toUpperCase()} · ${formatDistance(seg.distance)}${seg.approximate ? ' · APPROX.' : ''}`,
+      detail: withDate(`${TRANSPORT[seg.transport].label.toUpperCase()} · ${formatDistance(seg.distance)}${seg.approximate ? ' · APPROX.' : ''}`, seg.date),
       clock: minutes === null ? null : formatClock(minutes),
       progress,
       opacity: overlays.intro ? smoothstep(remap01(time, intro.end - 0.3, intro.end + 0.5)) : 1,
@@ -256,6 +289,8 @@ export function getAnimationState(model: AnimationModel, rawTime: number): Anima
     segmentProgress: fraction,
     vehicle: vehicleAt(seg, distance),
     visibleRoute,
+    routeColors,
+    accent: seg.color,
     markers,
     camera: getCamera(journey, phase, time, distance),
     overlay: { title, caption, labels: overlays.labels },

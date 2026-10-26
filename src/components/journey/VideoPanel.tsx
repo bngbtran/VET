@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { CameraMode } from '../../models/journey';
 import { DURATION_PRESETS, MAX_DURATION, MIN_DURATION, ROUTE_COLORS } from '../../models/video';
 import { MAP_STYLES } from '../../providers/maps/styles';
+import { useVideoDuration } from '../../hooks/useVideoDuration';
 import { journeyActions, useJourney } from '../../stores/journeyStore';
 import { FieldLabel, Section, Segmented, Toggle } from '../ui/controls';
 
@@ -15,54 +16,80 @@ export function VideoPanel() {
   const video = useJourney((s) => s.journey.videoSettings);
   const isPreset = DURATION_PRESETS.includes(video.duration);
   const [custom, setCustom] = useState(!isPreset);
+  const multiStop = useJourney((s) => s.journey.segments.length > 1);
+  const perLeg = multiStop && video.segmentTiming === 'perSegment';
+  const total = useVideoDuration();
 
   return (
     <>
       <Section title="DURATION">
-        <div className="grid grid-cols-7 gap-1">
-          {DURATION_PRESETS.map((d) => (
-            <button
-              key={d}
-              type="button"
-              aria-pressed={!custom && video.duration === d}
-              onClick={() => {
-                setCustom(false);
-                journeyActions.updateVideo({ duration: d });
-              }}
-              className={`h-7 rounded-md font-mono text-[11.5px] transition ${
-                !custom && video.duration === d ? 'bg-raised text-fg ring-1 ring-line-strong' : 'text-muted hover:text-fg'
-              }`}
-            >
-              {d}s
-            </button>
-          ))}
-          <button
-            type="button"
-            aria-pressed={custom}
-            onClick={() => setCustom(true)}
-            className={`h-7 rounded-md text-[11px] transition ${custom ? 'bg-raised text-fg ring-1 ring-line-strong' : 'text-muted hover:text-fg'}`}
-          >
-            ···
-          </button>
-        </div>
-        {custom && (
-          <label className="mt-2.5 flex items-center gap-2 text-[12px] text-muted">
-            Custom
-            <input
-              type="number"
-              min={MIN_DURATION}
-              max={MAX_DURATION}
-              step={1}
-              value={video.duration}
-              aria-label="Custom duration in seconds"
-              onChange={(e) => {
-                const v = Number(e.target.value);
-                if (Number.isFinite(v)) journeyActions.updateVideo({ duration: Math.max(MIN_DURATION, Math.min(MAX_DURATION, v)) });
-              }}
-              className="h-7 w-16 rounded-md bg-ink px-2 font-mono text-[12px] text-fg ring-1 ring-line outline-none focus:ring-accent/60"
+        {multiStop && (
+          <div className="mb-3">
+            <Segmented
+              label="Duration mode"
+              size="sm"
+              value={perLeg ? 'perSegment' : 'total'}
+              options={[
+                { value: 'total', label: 'Total', title: 'One length for the whole video, shared automatically' },
+                { value: 'perSegment', label: 'Per leg', title: 'Set the seconds of each leg in Journey' },
+              ]}
+              onChange={(mode) => journeyActions.setSegmentTiming(mode)}
             />
-            seconds
-          </label>
+          </div>
+        )}
+        {perLeg ? (
+          <p className="text-[12px] leading-relaxed text-muted">
+            Video <span className="font-mono text-fg">{total.toFixed(1)}s</span> — set each leg’s seconds in Journey. Intro,
+            stops and arrival are added automatically.
+          </p>
+        ) : (
+          <>
+            <div className="grid grid-cols-7 gap-1">
+              {DURATION_PRESETS.map((d) => (
+                <button
+                  key={d}
+                  type="button"
+                  aria-pressed={!custom && video.duration === d}
+                  onClick={() => {
+                    setCustom(false);
+                    journeyActions.updateVideo({ duration: d });
+                  }}
+                  className={`h-7 rounded-md font-mono text-[11.5px] transition ${
+                    !custom && video.duration === d ? 'bg-raised text-fg ring-1 ring-line-strong' : 'text-muted hover:text-fg'
+                  }`}
+                >
+                  {d}s
+                </button>
+              ))}
+              <button
+                type="button"
+                aria-pressed={custom}
+                onClick={() => setCustom(true)}
+                className={`h-7 rounded-md text-[11px] transition ${custom ? 'bg-raised text-fg ring-1 ring-line-strong' : 'text-muted hover:text-fg'}`}
+              >
+                ···
+              </button>
+            </div>
+            {custom && (
+              <label className="mt-2.5 flex items-center gap-2 text-[12px] text-muted">
+                Custom
+                <input
+                  type="number"
+                  min={MIN_DURATION}
+                  max={MAX_DURATION}
+                  step={1}
+                  value={video.duration}
+                  aria-label="Custom duration in seconds"
+                  onChange={(e) => {
+                    const v = Number(e.target.value);
+                    if (Number.isFinite(v)) journeyActions.updateVideo({ duration: Math.max(MIN_DURATION, Math.min(MAX_DURATION, v)) });
+                  }}
+                  className="h-7 w-16 rounded-md bg-ink px-2 font-mono text-[12px] text-fg ring-1 ring-line outline-none focus:ring-accent/60"
+                />
+                seconds
+              </label>
+            )}
+          </>
         )}
       </Section>
 

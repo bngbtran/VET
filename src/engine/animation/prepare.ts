@@ -22,8 +22,14 @@ export interface PreparedSegment {
   followZoom: number;
   /** Origin → destination bearing, used to orient the cinematic camera. */
   overallBearing: number;
-  /** Relative share of travel time in the video. */
+  /** Relative share of travel time in the video (automatic timing). */
   weight: number;
+  /** Resolved Vệt colour for this leg. */
+  color: string;
+  /** Display date for this leg ("10/2025"), falling back to the journey's, or null. */
+  date: string | null;
+  /** Explicit seconds of video for this leg (per-segment timing), or null. */
+  videoDuration: number | null;
 }
 
 export interface PreparedJourney {
@@ -33,6 +39,16 @@ export interface PreparedJourney {
   /** Camera that frames the whole journey. */
   overview: CameraState;
   settings: VideoSettings;
+  /** Display date, e.g. "10/2025", or null. */
+  date: string | null;
+  /** Sum of all routed segment distances, metres. */
+  totalDistance: number;
+}
+
+/** "2025-10" → "10/2025". */
+export function formatJourneyDate(value: string | null | undefined): string | null {
+  const m = /^(\d{4})-(\d{2})$/.exec(value ?? '');
+  return m ? `${m[2]}/${m[1]}` : null;
 }
 
 const placeLngLat = (p: Place): LngLat => [p.longitude, p.latitude];
@@ -66,6 +82,9 @@ export function prepareJourney(journey: Journey): PreparedJourney {
       overallBearing: getBearing(placeLngLat(seg.origin), placeLngLat(seg.destination)),
       // sqrt keeps a 15-minute walk visible next to a 12-hour train ride.
       weight: Math.sqrt(travelMinutes(seg)),
+      color: seg.color ?? journey.videoSettings.routeColor,
+      date: formatJourneyDate(seg.date) ?? formatJourneyDate(journey.date),
+      videoDuration: seg.videoDuration ?? null,
     });
   }
 
@@ -77,5 +96,12 @@ export function prepareJourney(journey: Journey): PreparedJourney {
     ? fitBoundsCamera(bounds, 0.14, places.length === 1 && segments.length === 0 ? 11 : 14)
     : { center: [107.9, 16.2], zoom: 5, bearing: 0, pitch: 0 }; // central Việt Nam
 
-  return { segments, places, overview, settings: journey.videoSettings };
+  return {
+    segments,
+    places,
+    overview,
+    settings: journey.videoSettings,
+    date: formatJourneyDate(journey.date),
+    totalDistance: segments.reduce((sum, s) => sum + s.distance, 0),
+  };
 }

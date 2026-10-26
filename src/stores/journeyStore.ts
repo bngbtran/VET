@@ -2,6 +2,8 @@ import type { Journey, JourneySegment, Place, VideoSettings } from '../models/jo
 import { createJourney, deriveSegments } from '../models/factory';
 import type { TransportMode } from '../models/transport';
 import { formatClock, parseClock, roundToFive } from '../engine/animation/clock';
+import { prepareJourney } from '../engine/animation/prepare';
+import { buildTimeline } from '../engine/animation/timeline';
 import { getRoute } from '../providers/routing';
 import { describeError, isAbortError } from '../utils/errors';
 import { createStore, useStore } from './createStore';
@@ -122,6 +124,11 @@ export const journeyActions = {
     commit(() => ({ journey: { name } }));
   },
 
+  /** "YYYY-MM", or null to clear. */
+  setDate(date: string | null) {
+    commit(() => ({ journey: { date } }));
+  },
+
   setStop(index: number, place: Place | null) {
     commit((s) => {
       const stops = s.journey.stops.slice();
@@ -163,6 +170,55 @@ export const journeyActions = {
       const transports = s.transports.slice();
       transports[gap] = mode;
       return { transports };
+    });
+  },
+
+  /** Vệt colour for one leg; null = use the journey colour. */
+  setSegmentColor(segmentId: string, color: string | null) {
+    commit((s) => ({
+      journey: { segments: s.journey.segments.map((seg) => (seg.id === segmentId ? { ...seg, color } : seg)) },
+    }));
+  },
+
+  /** Month for one leg, "YYYY-MM"; null = use the journey's date. */
+  setSegmentDate(segmentId: string, date: string | null) {
+    commit((s) => ({
+      journey: { segments: s.journey.segments.map((seg) => (seg.id === segmentId ? { ...seg, date } : seg)) },
+    }));
+  },
+
+  /** Seconds of video for one leg (per-segment timing). */
+  setSegmentDuration(segmentId: string, seconds: number) {
+    commit((s) => ({
+      journey: {
+        segments: s.journey.segments.map((seg) => (seg.id === segmentId ? { ...seg, videoDuration: seconds } : seg)),
+      },
+    }));
+  },
+
+  /**
+   * Switch between one total duration and per-leg durations. Entering per-leg mode seeds every
+   * leg with the length it currently gets, so the video doesn't change until the user edits it.
+   */
+  setSegmentTiming(mode: 'total' | 'perSegment') {
+    commit((s) => {
+      const { journey } = s;
+      const videoSettings = { ...journey.videoSettings, segmentTiming: mode };
+      if (mode === 'total') return { journey: { videoSettings } };
+      const prepared = prepareJourney({ ...journey, videoSettings: { ...videoSettings, segmentTiming: 'total' } });
+      const timeline = buildTimeline(prepared, journey.videoSettings.duration);
+      const current = new Map<string, number>();
+      for (const phase of timeline.phases) {
+        if (phase.kind !== 'travel') continue;
+        const seconds = Math.max(1, Math.round((phase.end - phase.start) * 2) / 2);
+        current.set(prepared.segments[phase.segment]!.id, seconds);
+      }
+      return {
+        journey: {
+          videoSettings,
+          segments: journey.segments.map((seg) => ({ ...seg, videoDuration: seg.videoDuration ?? current.get(seg.id) ?? null })),
+        },
+      };
     });
   },
 

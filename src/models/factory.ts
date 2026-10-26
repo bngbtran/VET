@@ -13,6 +13,7 @@ export const DEFAULT_VIDEO_SETTINGS: VideoSettings = {
   mapStyle: DEFAULT_MAP_STYLE,
   routeColor: ROUTE_COLORS[0]!.value,
   overlays: { intro: true, outro: true, caption: true, labels: true },
+  segmentTiming: 'total',
 };
 
 export function createJourney(): Journey {
@@ -22,6 +23,7 @@ export function createJourney(): Journey {
     name: 'Untitled journey',
     createdAt: now,
     updatedAt: now,
+    date: null,
     stops: [null, null],
     segments: [],
     videoSettings: structuredClone(DEFAULT_VIDEO_SETTINGS),
@@ -57,6 +59,9 @@ export function deriveSegments(
       startTime: prev?.startTime ?? null,
       endTime: prev?.endTime ?? null,
       route: prev && prev.transport === transport ? prev.route : null,
+      color: prev?.color ?? null,
+      date: prev?.date ?? null,
+      videoDuration: prev?.videoDuration ?? null,
     });
   }
   return segments;

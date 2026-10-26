@@ -35,6 +35,12 @@ export interface JourneySegment {
   startTime: string | null;
   endTime: string | null;
   route: Route | null;
+  /** When this leg happened, "YYYY-MM"; null/absent = the journey's date. */
+  date?: string | null;
+  /** Vệt colour for this leg; null/absent = the journey's colour. */
+  color?: string | null;
+  /** Seconds of video for this leg when timing is per segment; null/absent = automatic. */
+  videoDuration?: number | null;
 }
 
 export type CameraMode = 'static' | 'follow' | 'cinematic';
@@ -58,6 +64,11 @@ export interface VideoSettings {
   mapStyle: string;
   routeColor: string;
   overlays: OverlaySettings;
+  /**
+   * 'total': `duration` is the whole video and legs share it automatically.
+   * 'perSegment' (multi-stop only): each leg has its own seconds; the total follows from them.
+   */
+  segmentTiming?: 'total' | 'perSegment';
 }
 
 export interface Journey {
@@ -65,6 +76,8 @@ export interface Journey {
   name: string;
   createdAt: number;
   updatedAt: number;
+  /** When the journey happened, month precision: "YYYY-MM" (shown as "10/2025"). Optional. */
+  date?: string | null;
   /**
    * The stops the user picked, in order. Segments are derived pairwise from these
    * (stop[i] → stop[i+1]); `null` marks a stop that hasn't been chosen yet.
