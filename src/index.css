@@ -3,11 +3,15 @@
 @import '@fontsource/be-vietnam-pro/600.css';
 @import '@fontsource/jetbrains-mono/400.css';
 @import '@fontsource/jetbrains-mono/500.css';
+@import '@fontsource-variable/fraunces/full.css';
+@import '@fontsource-variable/fraunces/full-italic.css';
 @import 'tailwindcss';
 
 @theme {
   --font-sans: 'Be Vietnam Pro', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  /* Brand display face: Fraunces with the SOFT axis up — rounded, unhurried. */
+  --font-display: 'Fraunces Variable', Georgia, serif;
 
   --color-ink: #0b0c0e;
   --color-panel: #111215;
@@ -38,6 +42,11 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   overflow: hidden;
+}
+
+.font-display {
+  font-weight: 480;
+  font-variation-settings: 'SOFT' 100, 'WONK' 0, 'opsz' 72;
 }
 
 ::selection {
