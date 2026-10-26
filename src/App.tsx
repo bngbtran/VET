@@ -24,7 +24,7 @@ export function App() {
           <Wordmark className="text-[19px]" />
           <span className="font-display hidden text-[12.5px] italic text-faint md:inline">{BRAND.tagline}</span>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <ProjectMenu />
         </div>
       </header>
@@ -44,7 +44,7 @@ export function App() {
         </aside>
 
         <main className="flex min-w-0 flex-1 flex-col">
-          <div className="relative min-h-0 flex-1 bg-[#08090a] p-6">
+          <div className="relative min-h-0 flex-1 bg-stage p-6">
             <PreviewStage journey={journey} />
           </div>
           <PlayerBar disabled={!hasRoute} />

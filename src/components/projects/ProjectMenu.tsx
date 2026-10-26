@@ -155,7 +155,7 @@ export function ProjectMenu() {
                   role="menuitem"
                   type="button"
                   onClick={actions.open(p.id)}
-                  className={`flex w-full items-baseline justify-between gap-3 px-3 py-1.5 text-left text-[12.5px] hover:bg-white/[0.05] ${
+                  className={`flex w-full items-baseline justify-between gap-3 px-3 py-1.5 text-left text-[12.5px] hover:bg-hover ${
                     p.id === currentId ? 'text-accent' : 'text-fg/90'
                   }`}
                 >
@@ -199,7 +199,7 @@ function MenuItem({ children, onClick, danger }: { children: ReactNode; onClick:
       type="button"
       role="menuitem"
       onClick={onClick}
-      className={`block w-full px-3 py-1.5 text-left text-[12.5px] hover:bg-white/[0.05] ${danger ? 'text-danger' : 'text-fg/90'}`}
+      className={`block w-full px-3 py-1.5 text-left text-[12.5px] hover:bg-hover ${danger ? 'text-danger' : 'text-fg/90'}`}
     >
       {children}
     </button>

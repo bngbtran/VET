@@ -66,7 +66,7 @@ export function ExportDialog({
             </div>
             <div className="mt-4 font-mono text-[15px] tracking-[-0.05em] text-accent" aria-hidden="true">
               {'█'.repeat(filled)}
-              <span className="text-white/12">{'░'.repeat(BAR - filled)}</span>
+              <span className="text-track">{'░'.repeat(BAR - filled)}</span>
             </div>
             <div
               className="sr-only"
@@ -108,7 +108,7 @@ export function ExportDialog({
                 href={job.url}
                 download={job.result.filename}
                 data-testid="download"
-                className="inline-flex h-9 items-center gap-2 rounded-md bg-accent px-4 text-[12px] font-semibold tracking-[0.1em] text-ink hover:brightness-110"
+                className="inline-flex h-9 items-center gap-2 rounded-md bg-accent px-4 text-[12px] font-semibold tracking-[0.1em] text-on-accent hover:brightness-110"
               >
                 <DownloadIcon size={14} /> DOWNLOAD VIDEO
               </a>

@@ -70,10 +70,10 @@ export function Toggle({ checked, onChange, label }: { checked: boolean; onChang
         aria-checked={checked}
         aria-label={label}
         onClick={() => onChange(!checked)}
-        className={`relative h-[18px] w-[30px] rounded-full transition-colors ${checked ? 'bg-accent' : 'bg-white/12'}`}
+        className={`relative h-[18px] w-[30px] rounded-full transition-colors ${checked ? 'bg-accent' : 'bg-track'}`}
       >
         <span
-          className={`absolute top-[3px] h-3 w-3 rounded-full bg-ink transition-[left] ${checked ? 'left-[15px]' : 'left-[3px]'}`}
+          className={`absolute top-[3px] h-3 w-3 rounded-full bg-panel shadow-sm transition-[left] ${checked ? 'left-[15px]' : 'left-[3px]'}`}
         />
       </button>
     </label>
@@ -85,7 +85,7 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primar
 export function Button({ variant = 'ghost', className = '', ...rest }: ButtonProps) {
   const styles = {
     primary:
-      'bg-accent text-ink hover:brightness-110 disabled:bg-white/10 disabled:text-faint font-semibold tracking-[0.12em]',
+      'bg-accent text-on-accent hover:brightness-110 disabled:bg-track disabled:text-faint font-semibold tracking-[0.12em]',
     ghost: 'bg-raised text-fg ring-1 ring-line hover:ring-line-strong disabled:text-faint',
     quiet: 'text-muted hover:text-fg disabled:text-faint',
   }[variant];

@@ -168,7 +168,7 @@ export function LocationSearch({ label, value, onChange, near, marker, autoFocus
               onMouseDown={(e) => e.preventDefault()}
               onMouseEnter={() => setActive(i)}
               onClick={() => choose(place)}
-              className={`block w-full px-3 py-2 text-left ${i === active ? 'bg-white/[0.06]' : ''}`}
+              className={`block w-full px-3 py-2 text-left ${i === active ? 'bg-hover' : ''}`}
             >
               <div className="truncate text-[13px]">{place.name}</div>
               <div className="truncate text-[11px] text-muted">{place.displayName}</div>

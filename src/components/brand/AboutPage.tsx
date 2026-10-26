@@ -31,14 +31,16 @@ export function AboutPage({ onClose }: { onClose: () => void }) {
     <div className="scroll-quiet fixed inset-0 z-50 overflow-y-auto bg-ink" role="dialog" aria-modal="true" aria-labelledby="about-title">
       <div className="sticky top-0 z-10 flex h-12 items-center justify-between border-b border-line bg-ink/90 px-5 backdrop-blur">
         <Wordmark className="text-[19px]" />
-        <button
-          ref={closeRef}
-          type="button"
-          onClick={onClose}
-          className="flex items-center gap-2 rounded-md px-3 py-1.5 text-[12px] text-muted ring-1 ring-line hover:text-fg"
-        >
-          Quay lại trình biên tập <CloseIcon size={13} />
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            ref={closeRef}
+            type="button"
+            onClick={onClose}
+            className="flex items-center gap-2 rounded-md px-3 py-1.5 text-[12px] text-muted ring-1 ring-line hover:text-fg"
+          >
+            Quay lại trình biên tập <CloseIcon size={13} />
+          </button>
+        </div>
       </div>
 
       <main className="mx-auto max-w-[920px] px-6">

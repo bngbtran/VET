@@ -23,10 +23,39 @@
   --color-faint: #5d5b56;
   --color-accent: #f2b45a;
   --color-danger: #ff8a7a;
+  --color-stage: #08090a;
+  --color-hover: rgb(255 255 255 / 0.05);
+  --color-track: rgb(255 255 255 / 0.12);
+  /* Text on accent-filled surfaces. */
+  --color-on-accent: #0b0c0e;
 }
 
 :root {
   color-scheme: dark;
+}
+
+@layer base {
+  /* Everything clickable shows the hand cursor (Tailwind's preflight resets buttons to default). */
+  button:not(:disabled),
+  [role='button'],
+  [role='option'],
+  [role='menuitem'],
+  [role='radio'],
+  [role='switch'],
+  a[href],
+  summary,
+  select,
+  label:has(input, button),
+  input[type='range']:not(:disabled),
+  input[type='file'],
+  input[type='checkbox'] {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  input:disabled {
+    cursor: not-allowed;
+  }
 }
 
 html,
@@ -37,6 +66,7 @@ body,
 
 body {
   margin: 0;
+  transition: background-color 0.2s ease;
   background: var(--color-ink);
   color: var(--color-fg);
   font-family: var(--font-sans);
@@ -50,17 +80,13 @@ body {
 }
 
 ::selection {
-  background: rgb(242 180 90 / 0.35);
+  background: color-mix(in srgb, var(--color-accent) 35%, transparent);
 }
 
 /* Quiet scrollbars for the side panel. */
 .scroll-quiet {
   scrollbar-width: thin;
-  scrollbar-color: rgb(255 255 255 / 0.1) transparent;
-}
-
-input[type='time']::-webkit-calendar-picker-indicator {
-  filter: invert(0.6);
+  scrollbar-color: var(--color-track) transparent;
 }
 
 /* Timeline range input. */
@@ -69,17 +95,16 @@ input[type='time']::-webkit-calendar-picker-indicator {
   appearance: none;
   background: transparent;
   height: 18px;
-  cursor: pointer;
 }
 .vet-range::-webkit-slider-runnable-track {
   height: 3px;
   border-radius: 2px;
-  background: linear-gradient(to right, var(--color-accent) var(--fill, 0%), rgb(255 255 255 / 0.12) var(--fill, 0%));
+  background: linear-gradient(to right, var(--color-accent) var(--fill, 0%), var(--color-track) var(--fill, 0%));
 }
 .vet-range::-moz-range-track {
   height: 3px;
   border-radius: 2px;
-  background: linear-gradient(to right, var(--color-accent) var(--fill, 0%), rgb(255 255 255 / 0.12) var(--fill, 0%));
+  background: linear-gradient(to right, var(--color-accent) var(--fill, 0%), var(--color-track) var(--fill, 0%));
 }
 .vet-range::-webkit-slider-thumb {
   -webkit-appearance: none;
@@ -88,7 +113,7 @@ input[type='time']::-webkit-calendar-picker-indicator {
   margin-top: -4.5px;
   border-radius: 50%;
   background: var(--color-fg);
-  box-shadow: 0 0 0 3px rgb(242 180 90 / 0.25);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 25%, transparent);
 }
 .vet-range::-moz-range-thumb {
   width: 12px;
@@ -101,5 +126,5 @@ input[type='time']::-webkit-calendar-picker-indicator {
   outline: none;
 }
 .vet-range:focus-visible::-webkit-slider-thumb {
-  box-shadow: 0 0 0 4px rgb(242 180 90 / 0.55);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-accent) 55%, transparent);
 }

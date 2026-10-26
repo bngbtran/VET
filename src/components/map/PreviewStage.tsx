@@ -183,7 +183,7 @@ export function PreviewStage({ journey }: Props) {
   return (
     <div ref={frameRef} className="relative h-full w-full overflow-hidden">
       <div
-        className="absolute left-1/2 top-1/2 overflow-hidden rounded-[3px] bg-[#0b0c0e] shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_30px_80px_rgba(0,0,0,0.5)]"
+        className="absolute left-1/2 top-1/2 overflow-hidden rounded-[3px] bg-[#0b0c0e] shadow-[0_30px_80px_rgba(0,0,0,0.35)] ring-1 ring-line"
         style={{ width: RW, height: RH, transform: `translate(-50%, -50%) scale(${scale})` }}
         data-testid="preview-frame"
       >
@@ -195,7 +195,7 @@ export function PreviewStage({ journey }: Props) {
         )}
       </div>
       {mapError && (
-        <div className="absolute inset-x-0 top-6 mx-auto w-fit max-w-[90%] rounded-md border border-red-400/30 bg-[#1a0f0f] px-4 py-3 text-sm text-red-200">
+        <div className="absolute inset-x-0 top-6 mx-auto w-fit max-w-[90%] rounded-md bg-panel px-4 py-3 text-sm text-danger shadow-lg ring-1 ring-danger/40">
           {mapError}{' '}
           <button className="ml-2 underline" onClick={() => window.location.reload()}>
             Reload

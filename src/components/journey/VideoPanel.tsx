@@ -88,7 +88,7 @@ export function VideoPanel() {
                 video.mapStyle === s.id ? 'bg-raised text-fg ring-1 ring-line-strong' : 'text-muted hover:text-fg'
               }`}
             >
-              <span className={`h-3 w-3 rounded-sm ring-1 ring-white/15 ${s.tone === 'dark' ? 'bg-[#1d1f24]' : 'bg-[#e9e7e1]'}`} />
+              <span className={`h-3 w-3 rounded-sm ring-1 ring-line-strong ${s.tone === 'dark' ? 'bg-[#1d1f24]' : 'bg-[#e9e7e1]'}`} />
               {s.label}
             </button>
           ))}
@@ -106,7 +106,7 @@ export function VideoPanel() {
               title={c.label}
               onClick={() => journeyActions.updateVideo({ routeColor: c.value })}
               className={`h-6 w-6 rounded-full transition ${
-                video.routeColor === c.value ? 'ring-2 ring-fg ring-offset-2 ring-offset-panel' : 'opacity-70 hover:opacity-100'
+                video.routeColor === c.value ? 'ring-2 ring-fg ring-offset-2 ring-offset-panel' : 'opacity-75 ring-1 ring-line-strong hover:opacity-100'
               }`}
               style={{ background: c.value }}
             />

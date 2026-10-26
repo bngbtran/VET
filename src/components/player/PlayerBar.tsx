@@ -56,7 +56,7 @@ export function PlayerBar({ disabled }: { disabled: boolean }) {
         onClick={() => player.toggle()}
         aria-label={playing ? 'Pause' : 'Play'}
         data-testid="play"
-        className="grid h-8 w-8 place-items-center rounded-full bg-fg text-ink transition hover:bg-white disabled:bg-white/10 disabled:text-faint"
+        className="grid h-8 w-8 place-items-center rounded-full bg-fg text-ink transition hover:opacity-85 disabled:bg-track disabled:text-faint"
       >
         {playing ? <PauseIcon size={13} /> : <PlayIcon size={13} className="translate-x-px" />}
       </button>
